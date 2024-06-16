@@ -18,7 +18,7 @@ def get_processes(get_samples=False) -> Tuple[List[int], List[Tuple[int, int ,in
     df = df.sort_values(by=['SubmitTime'])
 
     if get_samples == True:
-        fake_times = df.sample(frac=1, replace=True, random_state=1233123)['UsedCPUTime'].values.tolist()
+        fake_times = df.sample(frac=1,weights=df['UsedCPUTime'].map(df['UsedCPUTime'].value_counts()), replace=True, random_state=1233123)['UsedCPUTime'].values.tolist()
 
     processes = df[['UsedCPUTime', 'SubmitTime']].values.tolist()
 

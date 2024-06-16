@@ -17,7 +17,7 @@ from xgboost import XGBRegressor
 from sklearn.model_selection import GridSearchCV
 
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
 
 sampling_seed: int = 1970
 seed: int = 1233123
@@ -89,6 +89,7 @@ def print_store_scores(model, X_test, Y_test) -> None:
     print(f'Mean Squared Error: {mean_squared_error(Y_test, Y_pred)}')
     print(f'Root Mean Squared Error: {np.sqrt(mean_squared_error(Y_test, Y_pred))}')
     print(f'Mean Absolute Error: {mean_absolute_error(Y_test, Y_pred)}')
+    print(f'Mean Absolute Percentage Error: {mean_absolute_percentage_error(Y_test, Y_pred)}')
     print(f'R^2: {model.score(X_test, Y_test)}')
 
 
@@ -112,7 +113,7 @@ def knn_model(X_train, Y_train, X_test, Y_test, **kwargs) -> KNeighborsRegressor
 
         grid_search = GridSearchCV(estimator=model,
                                     param_grid=param_grid,
-                                    scoring='neg_root_mean_squared_error',
+                                    scoring='neg_mean_absolute_percentage_error',
                                     cv=5,
                                     verbose=10,
                                     n_jobs=-1)
@@ -163,10 +164,10 @@ def random_forest_model(X_train, Y_train, X_test, Y_test, **kwargs) -> RandomFor
     if not kwargs:
 
         param_distributions = {
-            'n_estimators': randint(100, 1000),
-            'max_depth': randint(10, 50),
+            'n_estimators': randint(1, 100),
+            'max_depth': randint(1, 20),
             'min_samples_split': randint(2, 11),
-            'min_samples_leaf': randint(1, 11),
+            'min_samples_leaf': randint(1, 20),
         }
 
         random_search = RandomizedSearchCV(estimator=model,
@@ -237,20 +238,21 @@ if __name__ == '__main__':
     # N = int(input('Enter number of processes: '))
     args = {}
 
-    args_model = {'n_neighbors': 7, 'p': 1, 'weights': 'distance'}
-    # args_model = {}
+    args_model = {}
+    # args_model = {'n_neighbors': 7, 'p': 1, 'weights': 'distance'}
+    # args_model = {'n_neighbors': 3, 'p': 1}
     # args_model = {'max_depth': 16, 'min_samples_leaf': 1, 'min_samples_split': 3}
     # args_model = {'max_depth': 16, 'min_samples_leaf': 3, 'min_samples_split': 9}
 
     N = 30_000
     fraction = 0.1
-    encoding = 'target'
+    encoding = 'leave_one_out'
     if encoding == 'leave_one_out':
         args = {'sigma': 0.5, 'random_state': seed}
 
     model_name: Literal['linear', 'knn', 'rt', 'rf', 'xgb'] = 'knn'
 
-    df_sample = df.sample(frac=fraction, weights=df.groupby('UsedCPUTime')['UsedCPUTime'].transform('sum'), random_state=sampling_seed)
+    df_sample = df.sample(n=N, weights=df.groupby('UsedCPUTime')['UsedCPUTime'].transform('sum'), random_state=sampling_seed)
 
     target = 'UsedCPUTime'
 
@@ -264,7 +266,7 @@ if __name__ == '__main__':
     X_total = encoder.transform(df.drop([target], axis=1))
     Y_total = df[target]
 
-    print('Training model...')
+    print(f'Training model {model_name}...')
 
     if model_name == 'linear':
         model = linear_regression_model(X_train, Y_train, X_test, Y_test)
@@ -289,5 +291,5 @@ if __name__ == '__main__':
 
         import pickle
 
-        with open(f'{model_name}_{encoding}_{np.round(score, 3)}.pkl', 'wb') as f:
+        with open(f'{model_name}_{encoding}_s_{np.round(score, 3)}.pkl', 'wb') as f:
             pickle.dump(model, f)
