@@ -45,6 +45,17 @@ To install the necessary dependencies, run:
 pip install -r requirements.txt
 ```
 
+Download the data from the following link:
+http://gwa.ewi.tudelft.nl/fileadmin/pds/trace-archives/grid-workloads-archive/datasets/gwa-t-1/anon_jobs_sqlite.zip
+
+or use the following command:
+
+```bash
+wget http://gwa.ewi.tudelft.nl/fileadmin/pds/trace-archives/grid-workloads-archive/datasets/gwa-t-1/anon_jobs_sqlite.zip
+
+unzip anon_jobs_sqlite.zip
+```
+
 ## Usage
 
 1. Train the machine learning models by modifying the source code, just choosing model and size of sample, and run:
@@ -88,4 +99,3 @@ Contributions are welcome! Please fork this repository and submit a pull request
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-```
